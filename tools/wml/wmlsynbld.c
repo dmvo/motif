@@ -784,7 +784,7 @@ switch ( attrid )
 		rdesc->exclude = WmlAttributeFalse;
 		break;
 	    default:
-		printf ("\nwmlAddClassResourceAttribute: bad EXCLUDE value %d",
+		printf ("\nwmlAddClassResourceAttribute: bad EXCLUDE value %ld",
 			excval);
 		return;
 		break;
@@ -881,7 +881,7 @@ switch ( attrid )
 		break;
 	    default:
 		printf
-		    ("\nwmlAddResourceAttribute: bad XRMRESOURCE value %d",
+		    ("\nwmlAddResourceAttribute: bad XRMRESOURCE value %ld",
 		     xrmval);
 		return;
 		break;
@@ -969,7 +969,7 @@ switch ( attrid )
 		break;
 	    default:
 		printf
-		    ("\nwmlAddDatatypeAttribute: bad XRMRESOURCE value %d",
+		    ("\nwmlAddDatatypeAttribute: bad XRMRESOURCE value %ld",
 		     xrmval);
 		return;
 		break;
@@ -1216,7 +1216,7 @@ switch ( attrid )
 		break;
 	    default:
 		printf
-		    ("\nwmlAddCharsetAttribute: bad DIRECTION value %d",
+		    ("\nwmlAddCharsetAttribute: bad DIRECTION value %ld",
 		     atrval);
 		return;
 		break;
@@ -1234,7 +1234,7 @@ switch ( attrid )
 		break;
 	    default:
 		printf
-		    ("\nwmlAddCharsetAttribute: bad PARSEDIRECTION value %d",
+		    ("\nwmlAddCharsetAttribute: bad PARSEDIRECTION value %ld",
 		     atrval);
 		return;
 		break;
@@ -1255,7 +1255,7 @@ switch ( attrid )
 		break;
 	    default:
 		printf
-		    ("\nwmlAddCharsetAttribute: bad CHARACTERSIZE value %d",
+		    ("\nwmlAddCharsetAttribute: bad CHARACTERSIZE value %ld",
 		     atrval);
 		return;
 		break;

@@ -59,8 +59,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <locale.h>
-#include <ctype.h>
 #include <ctype.h>
 
 #ifdef aix
@@ -331,7 +331,7 @@ mkcatdefs(char *fname)
 	
 	sscanf (cp+3+len, "%s", setname);
 	if (inclfile) 
-	  fprintf (outfp, "\n/* definitions for set %s */\n", setname, "");
+	  fprintf (outfp, "\n/* definitions for set %s */\n", setname);
 	if (isdigit(setname[0])) {
 	  cpt = setname;
 	  do  {
@@ -376,7 +376,7 @@ mkcatdefs(char *fname)
 	    }
 	  } while (*(cpt += len));
 	  if (inclfile)
-	    fprintf (outfp, "#define %s %d\n\n", setname, (char *)setno);
+	    fprintf (outfp, "#define %s %d\n\n", setname, setno);
 	  symbflg = 1;
 	}
 #ifdef aix
@@ -428,7 +428,7 @@ mkcatdefs(char *fname)
 	    cp += strlen(msgname);
 	    fprintf (msgfp,"%d%s", msgno,cp);
 	    if (inclfile)
-	      fprintf (outfp, "#define %s %d\n", msgname, (char *)msgno);
+	      fprintf (outfp, "#define %s %d\n", msgname, msgno);
 	    symbflg = 1;
 	    if (chkcontin(line))
 	      contin = 1;
@@ -455,7 +455,7 @@ mkcatdefs(char *fname)
 	      errflg = 1;
 	      if (n == 0)
 		fprintf(stderr, "mkcatdefs: %s is an invalid identifier\n", 
-			msgno);
+			msgname);
 	      else if (n == msgno) 
 		fprintf(stderr,
 			"mkcatdefs: message id %s already assigned to identifier\n", 

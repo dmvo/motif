@@ -2399,7 +2399,7 @@ XmRenderTableCvtToProp(Widget widget, /* unused */
     if (_XmRendBG(rendition) == XmAS_IS)
       str = "-1, ";
     else {
-      sprintf(temp, "%d, ", _XmRendBG(rendition));
+      sprintf(temp, "%ld, ", _XmRendBG(rendition));
       str = temp;
     }
     size = strlen(str);
@@ -2408,7 +2408,7 @@ XmRenderTableCvtToProp(Widget widget, /* unused */
     if (_XmRendFG(rendition) == XmAS_IS)
       str = "-1, ";
     else {
-      sprintf(temp, "%d, ", _XmRendFG(rendition));
+      sprintf(temp, "%ld, ", _XmRendFG(rendition));
       str = temp;
     }
     size = strlen(str);

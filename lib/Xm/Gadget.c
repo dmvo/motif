@@ -66,6 +66,7 @@ static char rcsid[] = "$TOG: Gadget.c /main/17 1997/07/07 11:38:57 cshi $"
 #include "ResIndI.h"
 #include "RepTypeI.h"
 #include "SyntheticI.h"
+#include "TraitI.h"
 #include "TraversalI.h"
 
 

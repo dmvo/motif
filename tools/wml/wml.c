@@ -271,7 +271,7 @@ wmlInitHList (wml_synobj_ptr, 1000, TRUE);
 
 }
 
-yywrap()
+int yywrap()
 {
 return(1);
 }

@@ -1357,7 +1357,7 @@ SpinBLeft(Widget   leftWidget, XEvent   *leftEvent,
 
 /******************************************************************************
  * SpinBNext
- *	Action for DownArrow Key.
+ *	Action for UpArrow Key.
  *****************************************************************************/
 
 /*ARGSUSED*/
@@ -1372,7 +1372,7 @@ SpinBNext(Widget nextWidget,
 
 /******************************************************************************
  * SpinBPrior
- *	Action for UpArrow Key.
+ *	Action for DownArrow Key.
  *****************************************************************************/
 
 /*ARGSUSED*/

@@ -1919,7 +1919,12 @@ _XmRCAdaptToSize(
      _XmProcessUnlock();
      (*resize) ((Widget) instigator); 
    }
-   XtFree ( (char *) RC_Boxes(m));
+   /* Patch submitted by Kevin B. Hendrix of Java-Linux project. */
+   if (RC_Boxes(m))
+   {
+     XtFree ( (char *) RC_Boxes(m));
+     RC_Boxes(m) = NULL;
+   }
 }
 
 

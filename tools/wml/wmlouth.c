@@ -92,6 +92,7 @@ void wmlOutputUilSymCtl ();
 void wmlOutputUilSymNam ();
 void wmlOutputUilSymEnum ();
 void wmlOutputUilSymCSet ();
+int wmlResolveCtlIsMember (WmlClassDefPtr, WmlClassCtrlDefPtr);
 
 /*
  * globals

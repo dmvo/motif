@@ -47,6 +47,11 @@
 extern "C" {
 #endif
 
+/* Quick fix for Linux-ARM where "arm" is the #define symbol */
+#ifdef arm
+# undef arm
+#endif
+
 /* Menu System Traits */
 externalref XrmQuark XmQTmenuSystem;
 externalref XrmQuark XmQTmenuSavvy;

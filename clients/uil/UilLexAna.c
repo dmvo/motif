@@ -77,7 +77,11 @@ extern char *_XmStringGetCurrentCharset ();
 #include "UilDefI.h"
 #include <ctype.h>
 
+#ifndef X_NOT_STDC_ENV
+#include <stdlib.h>
+#else
 double atof();
+#endif
 
 #include <errno.h>	/* needed to support conversion functions */
 #ifdef X_NOT_STDC_ENV

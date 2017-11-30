@@ -60,6 +60,7 @@ static char rcsid[] = "$XConsortium: WmMenu.c /main/15 1996/11/20 15:20:17 rswis
 # include "WmDebug.h"
 #endif /* !defined(WSM) || defined(MWM_QATS_PROTOCOL) */
 #include <stdio.h>
+#include <ctype.h>
 
 #include <X11/Shell.h>
 
@@ -4459,7 +4460,10 @@ void FreeCustomMenuSpec (MenuSpec *menuSpec)
     KeySpec     *accelKeySpec;
     KeySpec     *nextAccelKeySpec;
 
-    if ((menuSpec == NULL) || (menuSpec->name != NULL))
+    /* Fix memory leak: use menuSpec->clientLocal to identify
+       custom menus instead of menuSpec->name */
+
+    if ((menuSpec == NULL) || (menuSpec->clientLocal == FALSE))
     /* we only destroy custom menus! */
     {
 	return;
@@ -4477,6 +4481,9 @@ void FreeCustomMenuSpec (MenuSpec *menuSpec)
      * End fix for CR 5450
      */
  
+    if (menuSpec->name != NULL)
+        XtFree(menuSpec->name);
+
     menuItem = menuSpec->menuItems;
     while (menuItem)
     {

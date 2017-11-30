@@ -138,6 +138,8 @@ static wchar_t* _Xmwcsncat(wchar_t *ws1, const wchar_t *ws2, size_t n)
 }
 #define wcsncat(w1,w2,l) _Xmwcsncat(w1,w2,l)
 
+#else  /* !__FreeBSD__ */
+#include <wchar.h>
 #endif /* __FreeBSD__ */
 
 #define MSG1		_XmMMsgTextF_0000
@@ -1315,7 +1317,11 @@ _XmTextFieldCountCharacters(XmTextFieldWidget tf,
 {
   char * bptr;
   int count = 0;
+#ifndef NO_MULTIBYTE
   int char_size = 0;
+#else
+  int char_size = 1;
+#endif
   
   if (n_bytes <= 0 || ptr == NULL || *ptr == '\0')
     return 0;
@@ -1325,11 +1331,16 @@ _XmTextFieldCountCharacters(XmTextFieldWidget tf,
   
   bptr = ptr;
   
+#ifndef NO_MULTIBYTE
   for (bptr = ptr; n_bytes > 0; count++, bptr+= char_size) {
     char_size = mblen(bptr, tf->text.max_char_size);
     if (char_size <= 0) break; /* error */
     n_bytes -= char_size;
   }
+#else
+  while (*bptr++ && n_bytes--)
+    count++;
+#endif
   return count;
 }
 
@@ -3635,9 +3646,14 @@ PrintableString(XmTextFieldWidget tf,
     } else {
       int i, csize;
       wchar_t wc;
+#ifndef NO_MULTIBYTE
       for (i = 0, csize = mblen(str, tf->text.max_char_size);
 	   i < n;
 	   i += csize, csize=mblen(&(str[i]), tf->text.max_char_size))
+#else
+      for (i = 0, csize = *str ? 1 : 0; i < n;
+	   i += csize, csize = str[i] ? 1 : 0)
+#endif
 	{
 	  if (csize < 0) 
 	    return False;
@@ -3655,9 +3671,14 @@ PrintableString(XmTextFieldWidget tf,
      */
     int i, csize;
     if (!use_wchar) {
+#ifndef NO_MULTIBYTE
       for (i = 0, csize = mblen(str, tf->text.max_char_size);
 	   i < n;
 	   i += csize, csize=mblen(&(str[i]), tf->text.max_char_size))
+#else
+      for (i = 0, csize = *str ? 1 : 0; i < n;
+	   i += csize, csize = str[i] ? 1 : 0)
+#endif
 	{
 	  if (csize < 0)
 	    return False;
@@ -10002,7 +10023,11 @@ XmTextFieldGetSelection(Widget w)
       length = 0;
     } else {
       for(length = 0;num_chars > 0; num_chars--)
+#ifndef NO_MULTIBYTE
 	length += mblen(&value[length], tf->text.max_char_size);
+#else
+        length += value[length] ? 1 : 0;
+#endif
     }
   }
   value[length] = (char)'\0';

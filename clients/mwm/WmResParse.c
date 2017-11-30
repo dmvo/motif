@@ -77,7 +77,7 @@ static char rcsid[] = "$XConsortium: WmResParse.c /main/9 1996/11/01 10:17:34 dr
 #include <X11/Xatom.h>
 #include <ctype.h>
 
-#include <locale.h>
+#include <X11/Xlocale.h>
 
 #ifndef NO_MULTIBYTE
 #include <stdlib.h>
@@ -101,6 +101,9 @@ static char rcsid[] = "$XConsortium: WmResParse.c /main/9 1996/11/01 10:17:34 dr
 #define MAX_CONTEXT_STRLEN    20
 #define MAX_GROUP_STRLEN      20
 
+#ifdef min
+#undef min
+#endif
 #define min(a,b)	((a)>(b) ? (b) : (a))
 
 #define MAXLINE     (MAXWMPATH+1)
@@ -2667,6 +2670,7 @@ static void ParseMenuSet (WmScreenData *pSD, unsigned char *lineP)
 #if ((!defined(WSM)) || defined(MWM_QATS_PROTOCOL))
     menuSpec->exclusions = NULL;
     menuSpec->clientLocal = FALSE;
+    menuSpec->commandID = 0;
 #endif /* !defined(WSM) || defined(MWM_QATS_PROTOCOL) */
     menuSpec->nextMenuSpec = NULL;
 
@@ -2922,7 +2926,7 @@ static MenuItem *ParseMenuItems (WmScreenData *pSD
 
 	if (!ParseWmAccelerator (&lineP, menuItem))
 	{
-	    XtFree ((char *)menuItem);
+	    FreeMenuItem (menuItem);
 	    continue;
 	}
 	/*
@@ -3133,7 +3137,11 @@ static void StoreExclusion (MenuSpec *menuSpec, String string)
 
 Boolean IsClientCommand (String string)
 {
-    if ((mblen ((char *)string, MB_CUR_MAX) == 1 && *string == '<') ||
+    if ((
+#ifndef NO_MULTIBYTE
+	 mblen ((char *)string, MB_CUR_MAX) == 1 &&
+#endif
+	 *string == '<') ||
 	(strncmp(string, "-><", 3) == 0) ||
 	(strncmp(string, "=<", 2) == 0)  ||
 	(strncmp(string, "=><", 3) == 0) ||
@@ -3243,10 +3251,12 @@ static Boolean ParseClientCommand (unsigned char **linePP, MenuSpec *menuSpec,
 	token = PRS_NO_STATE;
 	while (token == PRS_NO_STATE)
 	{
+#ifndef NO_MULTIBYTE
 	    if (mblen ((char *)stream, MB_CUR_MAX) > 1) {
 	      token = PRS_ERROR;
 	      continue;
 	    }
+#endif
 
 	    switch (*stream)
 	    {
@@ -3259,10 +3269,12 @@ static Boolean ParseClientCommand (unsigned char **linePP, MenuSpec *menuSpec,
 	      case '-':
 		/* This should be a cascade-force modifier */
 		++stream;
+#ifndef NO_MULTIBYTE
 		if (mblen ((char *)stream, MB_CUR_MAX) > 1) {
 		  token = PRS_ERROR;
 		  continue;
 		}
+#endif
 		if (*stream == '>')
 		{
 		    ++stream; token = PRS_MODIFIER;
@@ -3274,10 +3286,12 @@ static Boolean ParseClientCommand (unsigned char **linePP, MenuSpec *menuSpec,
 		   a combination separators and cascade-force
 		   modifier */
 		++stream;
+#ifndef NO_MULTIBYTE
 		if (mblen ((char *)stream, MB_CUR_MAX) > 1) {
 		  token = PRS_ERROR;
 		  continue;
 		}
+#endif
 		if (*stream == '>') ++stream;
 		token = PRS_MODIFIER;
 		*use_separators = TRUE;
@@ -3296,44 +3310,61 @@ static Boolean ParseClientCommand (unsigned char **linePP, MenuSpec *menuSpec,
 
 		/* This should be the beginning of a reference. First
 		   skip any leading whitespace. */
+#ifndef NO_MULTIBYTE
 		if (mblen ((char *)stream, MB_CUR_MAX) > 1) {
 		  token = PRS_ERROR;
 		  continue;
 		}
-		while (mblen ((char *)stream, MB_CUR_MAX) == 1 && 
+#endif
+		while (
+#ifndef NO_MULTIBYTE
+		       mblen ((char *)stream, MB_CUR_MAX) == 1 &&
+#endif
 		       (*stream == ' ' || *stream == '\t')) 
 		  ++stream;
 
+#ifndef NO_MULTIBYTE
 		if (mblen ((char *)stream, MB_CUR_MAX) > 1) {
 		  token = PRS_ERROR;
 		  continue;
 		}
+#endif
 		/* Now check for a reference name wild card or a
 		   full reference name */
 		if (*stream == '*')
 		  ++stream;
 		else
 		{
-		    while (mblen ((char *)stream, MB_CUR_MAX) == 1 && 
+		    while (
+#ifndef NO_MULTIBYTE
+			   mblen ((char *)stream, MB_CUR_MAX) == 1 &&
+#endif
 			   (isalnum(*stream) || *stream == ' ' ||
 			    *stream == '\t'  || *stream == '_' ))
 		      ++stream;
 		}
 		
+#ifndef NO_MULTIBYTE
 		if (mblen ((char *)stream, MB_CUR_MAX) > 1) {
 		  token = PRS_ERROR;
 		  continue;
 		}
+#endif
 
 		/* Now skip past any trailing white space */
-		while (mblen ((char *)stream, MB_CUR_MAX) == 1 && 
+		while (
+#ifndef NO_MULTIBYTE
+		       mblen ((char *)stream, MB_CUR_MAX) == 1 &&
+#endif
 		       (*stream == ' ' || *stream == '\t'))
 		  ++stream;
 
+#ifndef NO_MULTIBYTE
 		if (mblen ((char *)stream, MB_CUR_MAX) > 1) {
 		  token = PRS_ERROR;
 		  continue;
 		}
+#endif
 		/* At this point, we should be looking at the close
 		   of the reference */
 		if (*stream == '>')
@@ -3734,14 +3765,20 @@ static Boolean ParseWmAccelerator (unsigned char **linePP, MenuItem *menuItem)
 static void ParseMenuItemName (unsigned char **linePP, MenuItem *menuItem)
 {
     unsigned char *lineP, *endquote;
+#ifndef NO_MULTIBYTE
     int chlen;
+#endif
 
     /* Skip past any whitespace */
     ScanWhitespace (linePP);
     lineP = *linePP;
 
     /* Look for a double quote */
-    if (mblen ((char *)lineP, MB_CUR_MAX) == 1 && *lineP == '"')
+    if (
+#ifndef NO_MULTIBYTE
+	mblen ((char *)lineP, MB_CUR_MAX) == 1 &&
+#endif
+	*lineP == '"')
     {
 	/* Move past the first quote. */
 	++lineP;
@@ -3749,6 +3786,7 @@ static void ParseMenuItemName (unsigned char **linePP, MenuItem *menuItem)
 	endquote = lineP;
 
 	/* Search for closing quote */
+#ifndef NO_MULTIBYTE
 	while (*endquote != '\0' &&
 	       (chlen = mblen ((char *)endquote, MB_CUR_MAX)) > 0 && 
 	       (chlen > 1 || *endquote != '"'))
@@ -3759,6 +3797,12 @@ static void ParseMenuItemName (unsigned char **linePP, MenuItem *menuItem)
 	    endquote += chlen;
 	}
 	if (chlen < 0) return; /* invalid character */
+#else
+	while (*endquote != '\0' && *endquote != '"') {
+	  if (*endquote == '\n' || *endquote == '\0') return;
+	  endquote++;
+	}
+#endif
 
 	/* Well, we have a valid menu item name. Store it in the 
 	   client command name field. Don't include the double quotes. */
@@ -3772,10 +3816,15 @@ static void ParseMenuItemName (unsigned char **linePP, MenuItem *menuItem)
     {
 	/* If there was no double quote, then just advance to the end
 	   of the line. */
+#ifndef NO_MULTIBYTE
 	while (*lineP != '\0' && 
 	       ((chlen = mblen ((char *)lineP, MB_CUR_MAX)) > 1 ||
 		*lineP != '\n'))
 	  lineP += chlen > 0 ? chlen : 1;
+#else
+	while (*lineP != '\0' && *lineP != '\n')
+	  lineP++;
+#endif
 	*linePP = lineP;
     }
 }
@@ -4174,6 +4223,11 @@ void FreeMenuItem (MenuItem *menuItem)
 	 (menuItem->wmFunction == F_Screen)))
     {
 	XtFree ((char *)menuItem->wmFuncArgs);
+    }
+
+    if (menuItem->clientCommandName != NULL)
+    {
+	XtFree ((char *) menuItem->clientCommandName);
     }
 
     XtFree ((char *)menuItem);
@@ -8151,8 +8205,11 @@ GetNetworkFileName (char *pchFile)
 		host_part = NULL;
 	    }
 
-	    if ((mblen(file_part, MB_CUR_MAX) == 1) && 
+	    if (
+#ifndef NO_MULTIBYTE
+	        (mblen(file_part, MB_CUR_MAX) == 1) && 
 		(mblen(file_part+1, MB_CUR_MAX) == 1) &&
+#endif
 		(*file_part == '~') &&
 		(*(file_part+1) == '/'))
 	    {
@@ -8211,8 +8268,11 @@ GetNetworkFileName (char *pchFile)
 
     if (sReturn == NULL)
     {
-	if ((mblen(pchFile, MB_CUR_MAX) == 1) && 
+	if (
+#ifndef NO_MULTIBYTE
+	    (mblen(pchFile, MB_CUR_MAX) == 1) && 
 	    (mblen(pchFile+1, MB_CUR_MAX) == 1) &&
+#endif
 	    (*pchFile == '~') &&
 	    (*(pchFile+1) == '/'))
 	{
@@ -8321,7 +8381,7 @@ MenuItem *MakeSeparatorTemplate (int position)
     item->labelBitmapIndex = -1;
     item->mnemonic = (KeySym) 0;
     item->accelState = 0;
-    item->accelKeyCode = (KeyCode) NULL;
+    item->accelKeyCode = (KeyCode) 0;
     item->accelText = (String) NULL;
     item->wmFunction = (WmFunction) F_Separator;
     item->wmFuncArgs = (String) NULL;

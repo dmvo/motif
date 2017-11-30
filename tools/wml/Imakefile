@@ -35,8 +35,8 @@ XCOMM EXERCISE OF ANY RIGHTS GRANTED HEREUNDER, EVEN IF ADVISED OF THE
 XCOMM POSSIBILITY OF SUCH DAMAGES.
 
 INCLUDES = -I. -I$(INCLUDESRC) -I$(MINCLUDESRC) -I$(MLIBSRC) -I$(MTOP)/include
-DEPLIBS = $(DEPXMLIB)  $(DEPXTOOLLIB) $(DEPXLIB)
-LOCAL_LIBRARIES = $(XMLIB) $(XTOOLLIB) $(XPLIB) $(XLIB)
+DEPLIBS = XmClientDepLibs
+LOCAL_LIBRARIES = XmClientLibs
 
  
 SRCS1 =	wml.c		wmlouth.c	wmloutmm.c \
@@ -109,9 +109,9 @@ $(TARGETS):	$(WMLTOOLS) $(TABLE)
 	$(YACC) -d $(YACCFLAGS) Uil.y
 	$(MV) y.tab.c UilLexPars.c
 	$(MV) y.tab.h UilLexPars.h
-	$(CLIENTENVSETUP) ./wmluiltok < Uil.y > tokens.dat
+	./wmluiltok < Uil.y > tokens.dat
 	$(RM) wml-uil.mm
-	$(CLIENTENVSETUP) ./wml $(TABLE)
+	./wml $(TABLE)
 	$(RM) tokens.dat
 
 $(WMDTABLE):	wmldbcreate

@@ -40,10 +40,11 @@
 
 #if defined(__STDC__)
 #include <string.h>
+#include <stdlib.h>
 #endif
 
 #ifndef XmConst
-#if (defined(__STDC__) && __STDC__)  ||  !defined( NO_CONST )
+#if defined(__STDC__) || !defined( NO_CONST )
 #define XmConst const
 #else
 #define XmConst
@@ -186,7 +187,7 @@ void
 add_token (t)					/* keep sorted by name */
     Token t;
 {
-    int i, j, k;
+    int i, j;
 
     for (j=0; j<used; j++)			/* for each token */
     {
@@ -210,9 +211,9 @@ add_token (t)					/* keep sorted by name */
 
 
 
-yywrap ()
+int yywrap ()
 {
-    int i, j, k;
+    int i;
 
     for (i=0; i<used; i++)
 	 { 

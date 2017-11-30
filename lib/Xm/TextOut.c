@@ -666,7 +666,11 @@ _FontStructFindWidth(XmTextWidget tw,
     XCharStruct overall;
     
     for (i = from, ptr = block->ptr + from; i < to; i +=csize, ptr += csize) {
+#ifndef NO_MULTIBYTE
       csize = mblen(ptr, tw->text.char_size);
+#else
+      csize = *ptr ? 1 : 0;
+#endif
       if (csize <= 0) break;
       c = (unsigned char) *ptr;
       if (csize == 1) {
@@ -741,7 +745,11 @@ FindWidth(XmTextWidget tw,
   
   if (tw->text.char_size != 1) {
     for (i = from, ptr = block->ptr + from; i < to; i +=csize, ptr += csize) {
+#ifndef NO_MULTIBYTE
       csize = mblen(ptr, tw->text.char_size);
+#else
+      csize = *ptr ? 1 : 0;
+#endif
       if (csize <= 0) break;
       c = (unsigned char) *ptr;
       if (csize == 1 && c == '\t')
@@ -984,11 +992,19 @@ XYToPos(XmTextWidget tw,
 					       end, &block);
     length = block.length;
     if ((int)tw->text.char_size > 1) {
-      for (i = num_chars = 0, num_bytes = mblen(block.ptr, 
-						(int)tw->text.char_size);
+      for (i = num_chars = 0,
+#ifndef NO_MULTIBYTE
+	   num_bytes = mblen(block.ptr, (int)tw->text.char_size);
+#else
+	   num_bytes = *block.ptr ? 1 : 0;
+#endif
 	   i < length && width < x && num_bytes >= 0; 
 	   i += num_bytes, num_chars++, 
+#ifndef NO_MULTIBYTE
 	   num_bytes = mblen(&block.ptr[i], (int)tw->text.char_size)) {
+#else
+	   num_bytes = block.ptr[i] ? 1 : 0) {
+#endif
 	lastwidth = width;
 	width += FindWidth(tw, width, &block, i, i + num_bytes);
       }
@@ -1274,8 +1290,11 @@ _XmTextFindLineEnd(XmTextWidget tw,
 	       XmsdLeft, 1, True);
 	    (void) (*tw->text.source->ReadSource)
 	      (tw->text.source, position, oldpos, &block);
-	    num_bytes = mblen(block.ptr, 
-			      (int)tw->text.char_size);
+#ifndef NO_MULTIBYTE
+	    num_bytes = mblen(block.ptr, (int)tw->text.char_size);
+#else
+	    num_bytes = *block.ptr ? 1 : 0;
+#endif
 	    /* Pitiful error handling, but what else can you do? */
 	    if (num_bytes < 0) num_bytes = 1;
 	    x -= FindWidth(tw, x, &block, 0, num_bytes);
@@ -2544,8 +2563,12 @@ Draw(XmTextWidget tw,
 					       end, &block);
     if ((int)tw->text.char_size == 1) num_bytes = 1;
     else {
+#ifndef NO_MULTIBYTE
       num_bytes = mblen(block.ptr, (int)tw->text.char_size);
       if (num_bytes < 1) num_bytes = 1;
+#else
+      num_bytes = 1;
+#endif
     }
     while (block.length > 0) {
       while (num_bytes == 1 && block.ptr[0] == '\t') {
@@ -2561,9 +2584,12 @@ Draw(XmTextWidget tw,
 	    x = newx;
 	    if ((int)tw->text.char_size != 1) { 
 	      /* check if we've got mbyte char */
-	      num_bytes = mblen(block.ptr, 
-				(int)tw->text.char_size);
+#ifndef NO_MULTIBYTE
+	      num_bytes = mblen(block.ptr, (int)tw->text.char_size);
 	      if (num_bytes < 1) num_bytes = 1;
+#else
+	      num_bytes = 1;
+#endif
 	    }
 	  }
 	}
@@ -2616,9 +2642,13 @@ Draw(XmTextWidget tw,
 	block.length--;
 	block.ptr++;
 	if ((int)tw->text.char_size != 1) {
+#ifndef NO_MULTIBYTE
 	  num_bytes = mblen(block.ptr, (int)tw->text.char_size);
 	  /* crummy error handling, but ... */
 	  if (num_bytes < 0) num_bytes = 1;
+#else
+	  num_bytes = *block.ptr ? 1 : 0;
+#endif
 	}
 	if (block.length <= 0) break;
       }
@@ -2627,11 +2657,18 @@ Draw(XmTextWidget tw,
 	  if (block.ptr[length] == '\t') break;
 	}
       } else {
-	for (length = 0, num_bytes = mblen(block.ptr, 
-					   (int)tw->text.char_size); 
+	for (length = 0,
+#ifndef NO_MULTIBYTE
+             num_bytes = mblen(block.ptr, (int)tw->text.char_size); 
+#else
+	     num_bytes = *block.ptr ? 1 : 0;
+#endif
 	     length < block.length; 
-	     num_bytes = mblen(&block.ptr[length], 
-			       (int)tw->text.char_size)) {
+#ifndef NO_MULTIBYTE
+	     num_bytes = mblen(&block.ptr[length], (int)tw->text.char_size)) {
+#else
+	     num_bytes = block.ptr[length] ? 1 : 0) {
+#endif
 	  if ((num_bytes == 1) && block.ptr[length] == '\t') break;
 	  if (num_bytes == 0) break;
 	  if (num_bytes < 0) num_bytes = 1;
@@ -2651,8 +2688,12 @@ Draw(XmTextWidget tw,
 	  }
 	} else {
 	  if (newx - data->hoffset < data->leftmargin) {
+#ifndef NO_MULTIBYTE
 	    num_bytes = mblen(block.ptr, (int)tw->text.char_size);
 	    if (num_bytes < 0) num_bytes = 1;
+#else
+	    num_bytes = *block.ptr ? 1 : 0;
+#endif
 	    length -= num_bytes;
 	    block.length -= num_bytes;
 	    block.ptr += num_bytes;
@@ -2669,10 +2710,19 @@ Draw(XmTextWidget tw,
 	    newx += FindWidth(tw, newx, &block, i, i+1);
 	  }
 	} else {
-	  for (i=0, num_bytes = mblen(block.ptr, (int)tw->text.char_size); 
+	  for (i=0,
+#ifndef NO_MULTIBYTE
+	       num_bytes = mblen(block.ptr, (int)tw->text.char_size); 
+#else
+	       num_bytes = *block.ptr ? 1 : 0;
+#endif
 	       i < length && newx <= rightedge && num_bytes > 0; 
-	       i += num_bytes, num_bytes = mblen(&block.ptr[i], 
-						 (int)tw->text.char_size))
+	       i += num_bytes,
+#ifndef NO_MULTIBYTE
+	       num_bytes = mblen(&block.ptr[i], (int)tw->text.char_size))
+#else
+	       num_bytes = block.ptr[i] ? 1 : 0)
+#endif
 	    newx += FindWidth(tw, newx, &block, i, i + num_bytes);
 	}
 	length = i;
@@ -2753,8 +2803,12 @@ Draw(XmTextWidget tw,
       block.length -= length;
       block.ptr += length;
       if ((int)tw->text.char_size != 1) {
+#ifndef NO_MULTIBYTE
 	num_bytes = mblen(block.ptr, (int)tw->text.char_size);
 	if (num_bytes < 1) num_bytes = 1;
+#else
+        num_bytes = 1;
+#endif
       }
     }    
   }
