@@ -1,44 +1,31 @@
-/* $TOG: parse.c /main/35 1998/03/25 08:17:55 kaleb $ */
+/* $XConsortium: parse.c /main/33 1996/12/04 10:11:28 swick $ */
 /*
 
-@OPENGROUP_COPYRIGHT@
-COPYRIGHT NOTICE
-Copyright (c) 1990, 1991, 1992, 1993 Open Software Foundation, Inc.
-Copyright (c) 1996, 1997, 1998, 1999, 2000 The Open Group
-ALL RIGHTS RESERVED (MOTIF). See the file named COPYRIGHT.MOTIF for
-the full copyright text.
- 
+Copyright (c) 1993, 1994  X Consortium
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
 
-This software is subject to an open license. It may only be
-used on, with or for operating systems which are themselves open
-source systems. You must contact The Open Group for a license
-allowing distribution and sublicensing of this software on, with,
-or for operating systems which are not Open Source programs.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+X CONSORTIUM BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-See http://www.opengroup.org/openmotif/license for full
-details of the license agreement. Any use, reproduction, or
-distribution of the program constitutes recipient's acceptance of
-this agreement.
-
-EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT, THE PROGRAM IS
-PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT LIMITATION, ANY
-WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY
-OR FITNESS FOR A PARTICULAR PURPOSE
-
-EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT, NEITHER RECIPIENT
-NOR ANY CONTRIBUTORS SHALL HAVE ANY LIABILITY FOR ANY DIRECT,
-INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING WITHOUT LIMITATION LOST PROFITS), HOWEVER CAUSED
-AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-ANY WAY OUT OF THE USE OR DISTRIBUTION OF THE PROGRAM OR THE
-EXERCISE OF ANY RIGHTS GRANTED HEREUNDER, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGES.
+Except as contained in this notice, the name of the X Consortium shall not be
+used in advertising or otherwise to promote the sale, use or other dealings
+in this Software without prior written authorization from the X Consortium.
 
 */
+/* $XFree86: xc/config/makedepend/parse.c,v 1.3 1997/01/12 10:39:45 dawes Exp $ */
 
 #include "def.h"
 
@@ -234,6 +221,7 @@ int deftype (line, filep, file_red, file, parse_it)
 	case IDENT:
 	case SCCS:
 	case EJECT:
+	case WARNING:
 		debug(0,("%s, line %d: #%s\n",
 			file->i_file, filep->f_line, directives[ret]));
 		/*
@@ -628,6 +616,7 @@ find_includes(filep, file, file_red, recursion, failOK)
 			add_include(filep, file, file_red, line, TRUE, failOK);
 			break;
 		case ERROR:
+		case WARNING:
 		    	warning("%s: %d: %s\n", file_red->i_file,
 				 filep->f_line, line);
 		    	break;

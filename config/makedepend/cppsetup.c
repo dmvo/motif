@@ -1,44 +1,31 @@
-/* $TOG: cppsetup.c /main/18 1998/02/06 11:09:35 kaleb $ */
+/* $XConsortium: cppsetup.c /main/17 1996/09/28 16:15:03 rws $ */
 /*
 
-@OPENGROUP_COPYRIGHT@
-COPYRIGHT NOTICE
-Copyright (c) 1990, 1991, 1992, 1993 Open Software Foundation, Inc.
-Copyright (c) 1996, 1997, 1998, 1999, 2000 The Open Group
-ALL RIGHTS RESERVED (MOTIF). See the file named COPYRIGHT.MOTIF for
-the full copyright text.
- 
+Copyright (c) 1993, 1994  X Consortium
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
 
-This software is subject to an open license. It may only be
-used on, with or for operating systems which are themselves open
-source systems. You must contact The Open Group for a license
-allowing distribution and sublicensing of this software on, with,
-or for operating systems which are not Open Source programs.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+X CONSORTIUM BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-See http://www.opengroup.org/openmotif/license for full
-details of the license agreement. Any use, reproduction, or
-distribution of the program constitutes recipient's acceptance of
-this agreement.
-
-EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT, THE PROGRAM IS
-PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT LIMITATION, ANY
-WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY
-OR FITNESS FOR A PARTICULAR PURPOSE
-
-EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT, NEITHER RECIPIENT
-NOR ANY CONTRIBUTORS SHALL HAVE ANY LIABILITY FOR ANY DIRECT,
-INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING WITHOUT LIMITATION LOST PROFITS), HOWEVER CAUSED
-AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-ANY WAY OUT OF THE USE OR DISTRIBUTION OF THE PROGRAM OR THE
-EXERCISE OF ANY RIGHTS GRANTED HEREUNDER, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGES.
+Except as contained in this notice, the name of the X Consortium shall not be
+used in advertising or otherwise to promote the sale, use or other dealings
+in this Software without prior written authorization from the X Consortium.
 
 */
+/* $XFree86: xc/config/makedepend/cppsetup.c,v 3.2 1996/12/30 13:57:53 dawes Exp $ */
 
 #include "def.h"
 
@@ -54,7 +41,7 @@ POSSIBILITY OF SUCH DAMAGES.
 #define QB 16
 #define WB 32
 #define SALT '#'
-#if pdp11 | vax | ns16000 | mc68000 | ibm032
+#if defined(pdp11) || defined(vax) || defined(ns16000) || defined(mc68000) || defined(ibm032)
 #define COFF 128
 #else
 #define COFF 0
@@ -229,7 +216,7 @@ my_eval_variable (ip, var, len)
 }
 
 
-cppsetup(line, filep, inc)
+int cppsetup(line, filep, inc)
 	register char	*line;
 	register struct filepointer	*filep;
 	register struct inclist		*inc;

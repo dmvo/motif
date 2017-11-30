@@ -1,4 +1,4 @@
-/* $TOG: imake.c /main/104 1998/03/24 12:45:15 kaleb $ */
+/* $TOG: imake.c /main/97 1997/06/20 20:23:51 kaleb $ */
 
 /***************************************************************************
  *                                                                         *
@@ -8,47 +8,32 @@
  * be passed to the template file.                                         *
  *                                                                         *
  ***************************************************************************/
+/* $XFree86: xc/config/imake/imake.c,v 3.13.2.23 1999/12/20 12:55:40 hohndel Exp $ */
 
 /*
+ * 
+Copyright (c) 1985, 1986, 1987  X Consortium
 
-@OPENGROUP_COPYRIGHT@
-COPYRIGHT NOTICE
-Copyright (c) 1990, 1991, 1992, 1993 Open Software Foundation, Inc.
-Copyright (c) 1996, 1997, 1998, 1999, 2000 The Open Group
-ALL RIGHTS RESERVED (MOTIF). See the file named COPYRIGHT.MOTIF for
-the full copyright text.
- 
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
- 
-This software is subject to an open license. It may only be
-used on, with or for operating systems which are themselves open
-source systems. You must contact The Open Group for a license
-allowing distribution and sublicensing of this software on, with,
-or for operating systems which are not Open Source programs.
- 
-See http://www.opengroup.org/openmotif/license for full
-details of the license agreement. Any use, reproduction, or
-distribution of the program constitutes recipient's acceptance of
-this agreement.
- 
-EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT, THE PROGRAM IS
-PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT LIMITATION, ANY
-WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY
-OR FITNESS FOR A PARTICULAR PURPOSE
- 
-EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT, NEITHER RECIPIENT
-NOR ANY CONTRIBUTORS SHALL HAVE ANY LIABILITY FOR ANY DIRECT,
-INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING WITHOUT LIMITATION LOST PROFITS), HOWEVER CAUSED
-AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-ANY WAY OUT OF THE USE OR DISTRIBUTION OF THE PROGRAM OR THE
-EXERCISE OF ANY RIGHTS GRANTED HEREUNDER, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGES.
 
- * 
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+X CONSORTIUM BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Except as contained in this notice, the name of the X Consortium shall not be
+used in advertising or otherwise to promote the sale, use or other dealings
+in this Software without prior written authorization from the X Consortium.
  * 
  * Original Author:
  *	Todd Brunhoff
@@ -119,6 +104,9 @@ POSSIBILITY OF SUCH DAMAGES.
  *	- If DEFAULT_OS_TEENY_REV is defined, format the utsname struct
  *	  and call the result <defaultOsTeenyVersion>.  Add:
  *		#define DefaultOSTeenyVersion <defaultOsTeenyVersion>
+ *      - If DEFAULT_MACHINE_ARCITECTURE is defined, format the utsname struct
+ *        and define the corresponding macro. (For example on the amiga,
+ *        this will define amiga in addition to m68k).    
  *	- If the file "localdefines" is readable in the current
  *	  directory, print a warning message to stderr and add: 
  *		#define IMAKE_LOCAL_DEFINES	"localdefines"
@@ -157,9 +145,18 @@ POSSIBILITY OF SUCH DAMAGES.
  *	#include INCLUDE_IMAKEFILE
  *	<add any global targets like 'clean' and long dependencies>
  */
+#if defined(__FreeBSD__) || defined(__NetBSD__)
+/* This needs to be before _POSIX_SOURCE gets defined */
+# include <sys/param.h>
+# include <sys/types.h>
+# include <sys/sysctl.h>
+#endif
 #include <stdio.h>
-#include <ctype.h>
 #include "Xosdefs.h"
+#ifndef X_NOT_STDC_ENV
+#include <string.h>
+#endif
+#include <ctype.h>
 #ifdef WIN32
 # include "Xw32defs.h"
 #endif
@@ -177,6 +174,9 @@ POSSIBILITY OF SUCH DAMAGES.
 #else
 # include <unistd.h>
 #endif
+#ifdef ISC
+# include <unistd.h>
+#endif
 #if defined(X_NOT_POSIX) || defined(_POSIX_SOURCE)
 # include <signal.h>
 #else
@@ -184,9 +184,16 @@ POSSIBILITY OF SUCH DAMAGES.
 # include <signal.h>
 # undef _POSIX_SOURCE
 #endif
+#if !defined(SIGCHLD) && defined(SIGCLD)
+# define SIGCHLD		SIGCLD
+#endif
 #include <sys/stat.h>
 #ifndef X_NOT_POSIX
 # ifdef _POSIX_SOURCE
+#  ifdef SCO325
+#   include <sys/procset.h>
+#   include <sys/siginfo.h>
+#  endif
 #  include <sys/wait.h>
 # else
 #  define _POSIX_SOURCE
@@ -235,10 +242,18 @@ extern char	*getenv();
 #ifdef X_NOT_STDC_ENV
 extern int	errno;
 #endif
+#ifdef __minix_vmd
+#define USE_FREOPEN		1
+#endif
+
+#if !(defined(X_NOT_STDC_ENV) || (defined(sun) && !defined(SVR4)) || defined(macII))
+#define USE_STRERROR		1
+#endif
+#ifdef __EMX__
+#define USE_STRERROR		1
+#endif
 #ifndef WIN32
 #include <sys/utsname.h>
-#else
-#include <windows.h>
 #endif
 #ifndef SYS_NMLN
 # ifdef _SYS_NMLN
@@ -250,6 +265,10 @@ extern int	errno;
 #ifdef linux
 #include <limits.h>
 #endif
+#ifdef __QNX__
+#include <unix.h>
+#endif
+
 /* 
  * is strstr() in <strings.h> on X_NOT_STDC_ENV? 
  * are there any X_NOT_STDC_ENV machines left in the world?
@@ -261,13 +280,21 @@ extern int	errno;
  * This define of strerror is copied from (and should be identical to)
  * Xos.h, which we don't want to include here for bootstrapping reasons.
  */
-#if defined(X_NOT_STDC_ENV) || (defined(sun) && !defined(SVR4)) || defined(macII)
+#ifndef USE_STRERROR
 # ifndef strerror
 extern char *sys_errlist[];
 extern int sys_nerr;
 #  define strerror(n) \
     (((n) >= 0 && (n) < sys_nerr) ? sys_errlist[n] : "unknown error")
 # endif
+#endif
+
+#if defined(__NetBSD__)		/* see code clock in init() below */
+#include <sys/utsname.h>
+#endif
+
+#if !(defined(Lynx) || defined(__Lynx__) || (defined(SVR4) && !defined(sun)))
+#define HAS_MKSTEMP
 #endif
 
 #define	TRUE		1
@@ -371,11 +398,27 @@ main(argc, argv)
 
 	Imakefile = FindImakefile(Imakefile);
 	CheckImakefileC(ImakefileC);
-	if (Makefile)
-		tmpMakefile = Makefile;
-	else {
+	if (Makefile) {
+                tmpMakefile = Makefile;
+                if ((tmpfd = fopen(tmpMakefile, "w+")) == NULL)
+                   LogFatal("Cannot create temporary file %s.", tmpMakefile);
+	} else {
+	        int fd;
 		tmpMakefile = Strdup(tmpMakefile);
-		(void) mktemp(tmpMakefile);
+#ifndef HAS_MKSTEMP
+		if (mktemp(tmpMakefile) == NULL ||
+		    (tmpfd = fopen(tmpMakefile, "w+")) == NULL) {
+		   LogFatal("Cannot create temporary file %s.", tmpMakefile);
+		}
+#else
+	        fd = mkstemp(tmpMakefile);
+	        if (fd == -1 || (tmpfd = fdopen(fd, "w+")) == NULL) {
+		   if (fd != -1) {
+		      unlink(tmpMakefile); close(fd);
+		   }
+		   LogFatal("Cannot create temporary file %s.", tmpMakefile);
+		}
+#endif
 	}
 	AddMakeArg("-f");
 	AddMakeArg( tmpMakefile );
@@ -383,9 +426,6 @@ main(argc, argv)
 	AddMakeArg( makeMacro );
 	sprintf(makefileMacro, "MAKEFILE=%s", Imakefile);
 	AddMakeArg( makefileMacro );
-
-	if ((tmpfd = fopen(tmpMakefile, "w+")) == NULL)
-		LogFatal("Cannot create temporary file %s.", tmpMakefile);
 
 	cleanedImakefile = CleanCppInput(Imakefile);
 	cppit(cleanedImakefile, Template, ImakefileC, tmpfd, tmpMakefile);
@@ -451,6 +491,27 @@ init()
 	while (cpp_argv[ cpp_argindex ] != NULL)
 		cpp_argindex++;
 
+#if defined(__NetBSD__)
+	{
+		struct utsname uts;
+		static char argument[512];
+
+		/*
+		 * Sharable imake configurations require a
+		 * machine identifier.
+		 */
+		if (uname(&uts) != 0)
+			LogFatal("uname(3) failed; can't tell what %s",
+			    "kind of machine you have.");
+
+		memset(argument, 0, sizeof(argument));
+		(void)snprintf(argument, sizeof(argument) - 1,
+		    "-D__%s__", uts.machine);
+
+		AddCppArg(argument);
+	}
+#endif /* __NetBSD__ */
+
 	/*
 	 * See if the standard include directory is different than
 	 * the default.  Or if cpp is not the default.  Or if the make
@@ -474,6 +535,9 @@ init()
 
 	if (signal(SIGINT, SIG_IGN) != SIG_IGN)
 		signal(SIGINT, catch);
+#ifdef SIGCHLD
+	signal(SIGCHLD, SIG_DFL);
+#endif
 }
 
 void
@@ -515,6 +579,8 @@ SetOpts(argc, argv)
 		if (argv[0][1] == 'D') {
 		    AddCppArg(argv[0]);
 		} else if (argv[0][1] == 'I') {
+		    AddCppArg(argv[0]);
+		} else if (argv[0][1] == 'U') {
 		    AddCppArg(argv[0]);
 		} else if (argv[0][1] == 'f') {
 		    if (argv[0][2])
@@ -604,7 +670,7 @@ LogFatalI(s, i)
 	int i;
 {
 	/*NOSTRICT*/
-	LogFatal(s, (char *)i);
+	LogFatal(s, (char *)(long)i);
 }
 
 void
@@ -825,44 +891,9 @@ trim_version(p)
 }
 #endif
 
+
 #ifdef linux
-static void get_distrib(inFile)
-  FILE* inFile;
-{
-  struct stat sb;
-
-  static char* yast = "/sbin/YaST";
-  static char* redhat = "/etc/redhat-release";
-
-  fprintf (inFile, "%s\n", "#define LinuxUnknown    0");
-  fprintf (inFile, "%s\n", "#define LinuxSuSE       1");
-  fprintf (inFile, "%s\n", "#define LinuxCaldera    2");
-  fprintf (inFile, "%s\n", "#define LinuxCraftworks 3");
-  fprintf (inFile, "%s\n", "#define LinuxDebian     4");
-  fprintf (inFile, "%s\n", "#define LinuxInfoMagic  5");
-  fprintf (inFile, "%s\n", "#define LinuxKheops     6");
-  fprintf (inFile, "%s\n", "#define LinuxPro        7");
-  fprintf (inFile, "%s\n", "#define LinuxRedHat     8");
-  fprintf (inFile, "%s\n", "#define LinuxSlackware  9");
-  fprintf (inFile, "%s\n", "#define LinuxTurbo      10");
-  fprintf (inFile, "%s\n", "#define LinuxWare       11");
-  fprintf (inFile, "%s\n", "#define LinuxYggdrasil  12");
-
-  if (lstat (yast, &sb) == 0) {
-    fprintf (inFile, "%s\n", "#define DefaultLinuxDistribution LinuxSuSE");
-    return;
-  }
-  if (lstat (redhat, &sb) == 0) {
-    fprintf (inFile, "%s\n", "#define DefaultLinuxDistribution LinuxRedHat");
-    return;
-  }
-  /* what's the definitive way to tell what any particular distribution is? */
-
-  fprintf (inFile, "%s\n", "#define DefaultLinuxDistribution LinuxUnknown");
-  /* would like to know what version of the distribution it is */
-}
-
-static const char *libc_c=
+const char *libc_c=
 "#include <stdio.h>\n"
 "#include <ctype.h>\n"
 "\n"
@@ -930,71 +961,46 @@ static const char *libc_c=
 static void get_libc_version(inFile)
   FILE* inFile;
 {
-  static char* libcso = "/usr/lib/libc.so";
-  struct stat sb;
-  char buf[PATH_MAX];
-  char* ptr;
-  int libcmajor, libcminor, libcteeny;
+  char *aout = tmpnam (NULL);
+  FILE *fp;
+  const char *format = "%s -o %s -x c -";
+  char *cc;
+  int len;
+  char *command;
 
-  if (lstat (libcso, &sb) == 0) {
-    if (S_ISLNK (sb.st_mode)) {
-      /* 
-       * /usr/lib/libc.so is a symlink -- this is libc 5.x
-       * we can do this the quick way
-        */
-      if (readlink (libcso, buf, PATH_MAX) >= 0) {
-	for (ptr = buf; *ptr && !isdigit (*ptr); ptr++);
-	  (void) sscanf (ptr, "%d.%d.%d", &libcmajor, &libcminor, &libcteeny);
-	  fprintf(inFile, "#define DefaultLinuxCLibMajorVersion %d\n", libcmajor);    
-	  fprintf(inFile, "#define DefaultLinuxCLibMinorVersion %d\n", libcminor);    
-	  fprintf(inFile, "#define DefaultLinuxCLibTeenyVersion %d\n", libcteeny);    
-      }
-    } else {
-      /* 
-       * /usr/lib/libc.so is NOT a symlink -- this is libc 6.x / glibc 2.x
-       * now we have to figure this out the hard way.
-       */
-      char *aout = tmpnam (NULL);
-      FILE *fp;
-      const char *format = "%s -o %s -x c -";
-      char *cc;
-      int len;
-      char *command;
+  cc = getenv ("CC");
+  if (cc == NULL)
+    cc = "gcc";
+  len = strlen (aout) + strlen (format) + strlen (cc);
+  if (len < 128) len = 128;
+  command = alloca (len);
 
-      cc = getenv ("CC");
-      if (cc == NULL)
-	cc = "gcc";
-      len = strlen (aout) + strlen (format) + strlen (cc);
-      if (len < 128) len = 128;
-      command = alloca (len);
+  if (snprintf (command , len, format, cc, aout) == len)
+    abort ();
 
-      if (snprintf (command , len, format, cc, aout) == len)
-	abort ();
+  fp = popen (command, "w");
+  if (fp == NULL || fprintf (fp, "%s\n", libc_c) < 0
+      || pclose (fp) != 0)
+    abort ();
 
-      fp = popen (command, "w");
-      if (fp == NULL || fprintf (fp, "%s\n", libc_c) < 0 || pclose (fp) != 0)
-	abort ();
+  fp = popen (aout, "r");
+  if (fp == NULL)
+    abort ();
 
-      fp = popen (aout, "r");
-      if (fp == NULL)
-	abort ();
-
-      while (fgets (command, len, fp))
-	fprintf (inFile, command);
+  while (fgets (command, len, fp))
+    fprintf (inFile, command);
   
-      len = pclose (fp);
-      remove (aout);
-      if (len)
-	abort ();
-    }
-  }
+  len = pclose (fp);
+  remove (aout);
+  if (len)
+    abort ();
 }
 
 static void get_ld_version(inFile)
   FILE* inFile;
 {
   FILE* ldprog = popen ("ld -v", "r");
-  char c;
+  signed char c;
   int ldmajor, ldminor;
 
   if (ldprog) {
@@ -1010,69 +1016,43 @@ static void get_ld_version(inFile)
 }
 #endif
 
+#ifdef __FreeBSD__
+static void
+get_binary_format(FILE *inFile)
+{
+  int mib[2];
+  size_t len;
+  int osrel = 0;
+  FILE *objprog = NULL;
+  int iself = 0;
+  char buf[10];
+
+  mib[0] = CTL_KERN;
+  mib[1] = KERN_OSRELDATE;
+  len = sizeof(osrel);
+  sysctl(mib, 2, &osrel, &len, NULL, 0);
+  if (osrel >= 300004 &&
+      (objprog = popen("objformat", "r")) != NULL &&
+      fgets(buf, sizeof(buf), objprog) != NULL &&
+      strncmp(buf, "elf", 3) == 0)
+    iself = 1;
+  if (objprog)
+    pclose(objprog);
+
+  fprintf(inFile, "#define DefaultToElfFormat %s\n", iself ? "YES" : "NO");
+}
+#endif
+
 #ifndef PATH_MAX
 #define PATH_MAX 1024
 #endif
 
-#if defined(sun) && defined(__SVR4)
-static void get_sun_compiler_versions (inFile)
-  FILE* inFile;
-{
-  char buf[PATH_MAX];
-  char cmd[PATH_MAX];
-  static char* sunpro_cc = "/opt/SUNWspro/bin/cc";
-  static char* sunpro_CC = "/opt/SUNWspro/bin/CC";
-  int cmajor, cminor;
-  char* vptr;
-  struct stat sb;
-  FILE* ccproc;
-
-  if (lstat (sunpro_cc, &sb) == 0) {
-    strcpy (cmd, sunpro_cc);
-    strcat (cmd, " -V 2>&1");
-    if ((ccproc = popen (cmd, "r")) != NULL) {
-      if (fgets (buf, PATH_MAX, ccproc) != NULL) {
-	vptr = strrchr (buf, 'C');
-	for (; !isdigit(*vptr); vptr++);
-	(void) sscanf (vptr, "%d.%d", &cmajor, &cminor);
-	fprintf (inFile, 
-		 "#define DefaultSunProCCompilerMajorVersion %d\n",
-		 cmajor);
-	fprintf (inFile, 
-		 "#define DefaultSunProCCompilerMinorVersion %d\n",
-		 cminor);
-      }
-      while (fgets (buf, PATH_MAX, ccproc) != NULL) {};
-      pclose (ccproc);
-    }
-  }
-  if (lstat (sunpro_CC, &sb) == 0) {
-    strcpy (cmd, sunpro_CC);
-    strcat (cmd, " -V 2>&1");
-    if ((ccproc = popen (cmd, "r")) != NULL) {
-      if (fgets (buf, PATH_MAX, ccproc) != NULL) {
-	vptr = strrchr (buf, 'C');
-	for (; !isdigit(*vptr); vptr++);
-	(void) sscanf (vptr, "%d.%d", &cmajor, &cminor);
-	fprintf (inFile, 
-		 "#define DefaultSunProCplusplusCompilerMajorVersion %d\n",
-		 cmajor);
-	fprintf (inFile, 
-		 "#define DefaultSunProCplusplusCompilerMinorVersion %d\n",
-		 cminor);
-      }
-      while (fgets (buf, PATH_MAX, ccproc) != NULL) {};
-      pclose (ccproc);
-    }
-  }
-}
-#endif
-
+#ifndef __EMX__
 static void get_gcc_incdir(inFile)
   FILE* inFile;
 {
   static char* gcc_path[] = {
-#ifdef linux
+#if defined(linux) || defined(__OpenBSD__)
     "/usr/bin/cc",	/* for Linux PostIncDir */
 #endif
     "/usr/local/bin/gcc",
@@ -1103,12 +1083,13 @@ static void get_gcc_incdir(inFile)
   if (buf[0])
     fprintf (inFile, "#define DefaultGccIncludeDir %s\n", buf);
 }
+#endif
 
 boolean
 define_os_defaults(inFile)
 	FILE	*inFile;
 {
-#ifndef WIN32
+#if !defined(WIN32) && !defined(__EMX__)
 #if (defined(DEFAULT_OS_NAME) || defined(DEFAULT_OS_MAJOR_REV) || \
      defined(DEFAULT_OS_MINOR_REV) || defined(DEFAUL_OS_TEENY_REV))
 	struct utsname name;
@@ -1121,6 +1102,9 @@ define_os_defaults(inFile)
 # ifdef DEFAULT_OS_NAME
 	parse_utsname(&name, DEFAULT_OS_NAME, buf, 
 		      "Bad DEFAULT_OS_NAME syntax %s");
+#  ifdef DEFAULT_OS_NAME_FROB
+	DEFAULT_OS_NAME_FROB(buf, sizeof buf);
+#  endif
 	if (buf[0] != '\0')
 		fprintf(inFile, "#define DefaultOSName %s\n", buf);
 # endif
@@ -1128,50 +1112,48 @@ define_os_defaults(inFile)
 # ifdef DEFAULT_OS_MAJOR_REV
 	parse_utsname(&name, DEFAULT_OS_MAJOR_REV, buf,
 		      "Bad DEFAULT_OS_MAJOR_REV syntax %s");
-	fprintf(inFile, "#define DefaultOSMajorVersion %s\n", 
+#  ifdef DEFAULT_OS_MAJOR_REV_FROB
+	DEFAULT_OS_MAJOR_REV_FROB(buf, sizeof buf);
+#  endif
+	fprintf(inFile, "#define DefaultOSMajorVersion %s\n",
 		*buf ? trim_version(buf) : "0");
 # endif
 
 # ifdef DEFAULT_OS_MINOR_REV
 	parse_utsname(&name, DEFAULT_OS_MINOR_REV, buf,
 		      "Bad DEFAULT_OS_MINOR_REV syntax %s");
-	fprintf(inFile, "#define DefaultOSMinorVersion %s\n", 
+#  ifdef DEFAULT_OS_MINOR_REV_FROB
+	DEFAULT_OS_MINOR_REV_FROB(buf, sizeof buf);
+#  endif
+	fprintf(inFile, "#define DefaultOSMinorVersion %s\n",
 		*buf ? trim_version(buf) : "0");
 # endif
 
 # ifdef DEFAULT_OS_TEENY_REV
 	parse_utsname(&name, DEFAULT_OS_TEENY_REV, buf,
 		      "Bad DEFAULT_OS_TEENY_REV syntax %s");
-	fprintf(inFile, "#define DefaultOSTeenyVersion %s\n", 
+#  ifdef DEFAULT_OS_TEENY_REV_FROB
+	DEFAULT_OS_TEENY_REV_FROB(buf, sizeof buf);
+#  endif
+	fprintf(inFile, "#define DefaultOSTeenyVersion %s\n",
 		*buf ? trim_version(buf) : "0");
+# endif
+# ifdef DEFAULT_MACHINE_ARCHITECTURE
+	parse_utsname(&name, DEFAULT_MACHINE_ARCHITECTURE, buf, 
+		      "Bad DEFAULT_MACHINE_ARCHITECTURE %s");
+	fprintf(inFile, "#ifndef %s\n# define %s\n#endif\n", buf, buf);
 # endif
 #endif
 #ifdef linux
-    get_distrib (inFile);
     get_libc_version (inFile);
     get_ld_version(inFile);
 #endif
     get_gcc_incdir(inFile);
-#if defined (sun) && defined(SVR4)
-    get_sun_compiler_versions (inFile);
+#ifdef __FreeBSD__
+    get_binary_format(inFile);
 #endif
-#else /* WIN32 */
-   OSVERSIONINFO osvi;
-   static char* os_names[] = { "Win32s", "Windows 95", "Windows NT" };
-
-   memset(&osvi, 0, sizeof(OSVERSIONINFO));
-   osvi.dwOSVersionInfoSize = sizeof (OSVERSIONINFO);
-   GetVersionEx (&osvi);
-
-   fprintf (inFile, "#define DefaultOSName Microsoft %s\n", 
-	    os_names[osvi.dwPlatformId]);
-
-   fprintf(inFile, "#define DefaultOSMajorVersion %d\n", osvi.dwMajorVersion);
-   fprintf(inFile, "#define DefaultOSMinorVersion %d\n", osvi.dwMinorVersion);
-   fprintf(inFile, "#define DefaultOSTeenyVersion %d\n", 
-	   osvi.dwBuildNumber & 0xFFFF);
 #endif /* WIN32 */
-   return FALSE;
+	return FALSE;
 }
 
 void
@@ -1269,12 +1251,26 @@ CleanCppInput(imakefile)
 		    strcmp(ptoken, "pragma") &&
 		    strcmp(ptoken, "undef")) {
 		    if (outFile == NULL) {
+		        int fd;
 			tmpImakefile = Strdup(tmpImakefile);
-			(void) mktemp(tmpImakefile);
-			outFile = fopen(tmpImakefile, "w");
-			if (outFile == NULL)
+#ifndef HAS_MKSTEMP
+			if (mktemp(tmpImakefile) == NULL ||
+			    (outFile = fopen(tmpImakefile, "w+")) == NULL) {
 			    LogFatal("Cannot open %s for write.",
 				tmpImakefile);
+			}
+#else
+			fd=mkstemp(tmpImakefile);
+			if (fd != -1)
+			    outFile = fdopen(fd, "w");
+			if (outFile == NULL) {
+			    if (fd != -1) {
+			       unlink(tmpImakefile); close(fd);
+			    }
+			    LogFatal("Cannot open %s for write.",
+				tmpImakefile);
+			}
+#endif
 		    }
 		    writetmpfile(outFile, punwritten, pbuf-punwritten,
 				 tmpImakefile);
@@ -1436,7 +1432,7 @@ ReadLine(tmpfd, tmpfname)
 		end = buf + total_red;
 		*end = '\0';
 		fseek(tmpfd, 0, 0);
-#if defined(SYSV) || defined(WIN32)
+#if defined(SYSV) || defined(WIN32) || defined(USE_FREOPEN)
 		tmpfd = freopen(tmpfname, "w+", tmpfd);
 #ifdef WIN32
 		if (! tmpfd) /* if failed try again */
@@ -1450,7 +1446,7 @@ ReadLine(tmpfd, tmpfname)
 		initialized = TRUE;
 	    fprintf (tmpfd, "# Makefile generated by imake - do not edit!\n");
 	    fprintf (tmpfd, "# %s\n",
-		"$TOG: imake.c /main/104 1998/03/24 12:45:15 kaleb $");
+		"$TOG: imake.c /main/97 1997/06/20 20:23:51 kaleb $");
 	}
 
 	for (p1 = pline; p1 < end; p1++) {

@@ -1,42 +1,29 @@
-/* $TOG: main.c /main/86 1998/03/25 08:17:50 kaleb $ */
+/* $XConsortium: main.c /main/84 1996/12/04 10:11:23 swick $ */
+/* $XFree86: xc/config/makedepend/main.c,v 3.11.2.1 1997/05/11 05:04:07 dawes Exp $ */
 /*
 
-@OPENGROUP_COPYRIGHT@
-COPYRIGHT NOTICE
-Copyright (c) 1990, 1991, 1992, 1993 Open Software Foundation, Inc.
-Copyright (c) 1996, 1997, 1998, 1999, 2000 The Open Group
-ALL RIGHTS RESERVED (MOTIF). See the file named COPYRIGHT.MOTIF for
-the full copyright text.
- 
+Copyright (c) 1993, 1994  X Consortium
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
 
-This software is subject to an open license. It may only be
-used on, with or for operating systems which are themselves open
-source systems. You must contact The Open Group for a license
-allowing distribution and sublicensing of this software on, with,
-or for operating systems which are not Open Source programs.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+X CONSORTIUM BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-See http://www.opengroup.org/openmotif/license for full
-details of the license agreement. Any use, reproduction, or
-distribution of the program constitutes recipient's acceptance of
-this agreement.
-
-EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT, THE PROGRAM IS
-PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT LIMITATION, ANY
-WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT, MERCHANTABILITY
-OR FITNESS FOR A PARTICULAR PURPOSE
-
-EXCEPT AS EXPRESSLY SET FORTH IN THIS AGREEMENT, NEITHER RECIPIENT
-NOR ANY CONTRIBUTORS SHALL HAVE ANY LIABILITY FOR ANY DIRECT,
-INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING WITHOUT LIMITATION LOST PROFITS), HOWEVER CAUSED
-AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-ANY WAY OUT OF THE USE OR DISTRIBUTION OF THE PROGRAM OR THE
-EXERCISE OF ANY RIGHTS GRANTED HEREUNDER, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGES.
+Except as contained in this notice, the name of the X Consortium shall not be
+used in advertising or otherwise to promote the sale, use or other dealings
+in this Software without prior written authorization from the X Consortium.
 
 */
 
@@ -61,6 +48,10 @@ POSSIBILITY OF SUCH DAMAGES.
 
 #if NeedVarargsPrototypes
 #include <stdarg.h>
+#endif
+
+#ifdef MINIX
+#define USE_CHMOD	1
 #endif
 
 #ifdef DEBUG
@@ -131,7 +122,7 @@ catch (sig)
 	fatalerr ("got signal %d\n", sig);
 }
 
-#if defined(USG) || (defined(i386) && defined(SYSV)) || defined(WIN32)
+#if defined(USG) || (defined(i386) && defined(SYSV)) || defined(WIN32) || defined(__EMX__) || defined(Lynx_22)
 #define USGISH
 #endif
 
@@ -145,7 +136,7 @@ catch (sig)
 struct sigaction sig_act;
 #endif /* USGISH */
 
-main(argc, argv)
+int main(argc, argv)
 	int	argc;
 	char	**argv;
 {
@@ -158,6 +149,8 @@ main(argc, argv)
 	struct symtab *psymp = predefs;
 	char *endmarker = NULL;
 	char *defincdir = NULL;
+	char **undeflist = NULL;
+	int numundefs = 0, i;
 
 	ProgramName = argv[0];
 
@@ -252,6 +245,20 @@ main(argc, argv)
 				argc--;
 			}
 			break;
+		case 'U':
+			/* Undef's override all -D's so save them up */
+			numundefs++;
+			if (numundefs == 1)
+			    undeflist = malloc(sizeof(char *));
+			else
+			    undeflist = realloc(undeflist,
+						numundefs * sizeof(char *));
+			if (argv[0][2] == '\0') {
+				argv++;
+				argc--;
+			}
+			undeflist[numundefs - 1] = argv[0] + 2;
+			break;
 		case 'Y':
 			defincdir = argv[0]+2;
 			break;
@@ -331,15 +338,42 @@ main(argc, argv)
 			warning("ignoring option %s\n", argv[0]);
 		}
 	}
+	/* Now do the undefs from the command line */
+	for (i = 0; i < numundefs; i++)
+	    undefine(undeflist[i], &maininclist);
+	if (numundefs > 0)
+	    free(undeflist);
+
 	if (!defincdir) {
 #ifdef PREINCDIR
 	    if (incp >= includedirs + MAXDIRS)
 		fatalerr("Too many -I flags.\n");
 	    *incp++ = PREINCDIR;
 #endif
+#ifdef __EMX__
+	    {
+		char *emxinc = getenv("C_INCLUDE_PATH");
+		/* can have more than one component */
+		if (emxinc) {
+		    char *beg, *end;
+		    beg= (char*)strdup(emxinc);
+		    for (;;) {
+			end = (char*)strchr(beg,';');
+			if (end) *end = 0;
+		    	if (incp >= includedirs + MAXDIRS)
+				fatalerr("Too many include dirs\n");
+			*incp++ = beg;
+			if (!end) break;
+			beg = end+1;
+		    }
+		}
+	    }
+#else /* !__EMX__, does not use INCLUDEDIR at all */
 	    if (incp >= includedirs + MAXDIRS)
 		fatalerr("Too many -I flags.\n");
 	    *incp++ = INCLUDEDIR;
+#endif
+
 #ifdef POSTINCDIR
 	    if (incp >= includedirs + MAXDIRS)
 		fatalerr("Too many -I flags.\n");
@@ -435,6 +469,21 @@ main(argc, argv)
 	exit(0);
 }
 
+#ifdef __EMX__
+/*
+ * eliminate \r chars from file
+ */
+static int elim_cr(char *buf, int sz)
+{
+	int i,wp;
+	for (i= wp = 0; i<sz; i++) {
+		if (buf[i] != '\r')
+			buf[wp++] = buf[i];
+	}
+	return wp;
+}
+#endif
+
 struct filepointer *getfile(file)
 	char	*file;
 {
@@ -455,6 +504,9 @@ struct filepointer *getfile(file)
 		fatalerr("cannot allocate mem\n");
 	if ((st.st_size = read(fd, content->f_base, st.st_size)) < 0)
 		fatalerr("failed to read %s\n", file);
+#ifdef __EMX__
+	st.st_size = elim_cr(content->f_base,st.st_size);
+#endif
 	close(fd);
 	content->f_len = st.st_size+1;
 	content->f_p = content->f_base;
@@ -481,7 +533,7 @@ char *copy(str)
 	return(p);
 }
 
-match(str, list)
+int match(str, list)
 	register char	*str, **list;
 {
 	register int	i;
@@ -524,7 +576,7 @@ char *getline(filep)
 			}
 			continue;
 		}
-#ifdef WIN32
+#if defined(WIN32) || defined(__EMX__)
 		else if (*p == '/' && *(p+1) == '/') { /* consume comments */
 			*p++ = ' ', *p++ = ' ';
 			while (*p && *p != '\n')
@@ -579,7 +631,7 @@ char *base_name(file)
 	return(file);
 }
 
-#if defined(USG) && !defined(CRAY) && !defined(SVR4)
+#if defined(USG) && !defined(CRAY) && !defined(SVR4) && !defined(__EMX__) && !defined(clipper) && !defined(__clipper__)
 int rename (from, to)
     char *from, *to;
 {
@@ -630,12 +682,12 @@ redirect(line, makefile)
 		fatalerr("cannot open \"%s\"\n", makefile);
 	sprintf(backup, "%s.bak", makefile);
 	unlink(backup);
-#ifdef WIN32
+#if defined(WIN32) || defined(__EMX__)
 	fclose(fdin);
 #endif
 	if (rename(makefile, backup) < 0)
 		fatalerr("cannot rename %s to %s\n", makefile, backup);
-#ifdef WIN32
+#if defined(WIN32) || defined(__EMX__)
 	if ((fdin = fopen(backup, "r")) == NULL)
 		fatalerr("cannot open \"%s\"\n", backup);
 #endif
@@ -658,7 +710,7 @@ redirect(line, makefile)
 	    }
 	}
 	fflush(fdout);
-#if defined(USGISH) || defined(_SEQUENT_)
+#if defined(USGISH) || defined(_SEQUENT_) || defined(USE_CHMOD)
 	chmod(makefile, st.st_mode);
 #else
         fchmod(fileno(fdout), st.st_mode);
