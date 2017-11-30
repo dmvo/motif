@@ -102,4 +102,4 @@ INSTFILES = $(RULEFILES) $(TMPLFILES) $(DEFFILES) $(CFFILES) $(LOCALFILES)
 
 all::
 
-InstallMultipleDestFlags(install,$(INSTFILES),$(CONFIGDIR),$(INSTDATFLAGS))
+InstallMultipleDestFlags(install,/**/,/**/,/**/)

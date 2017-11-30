@@ -67,6 +67,7 @@ VerifyOS::
 
 includes::
 	MakeDir($(BUILDINCDIR))
+	MakeDir($(BUILDLIBDIR))
 	MakeDir($(BUILDDOCDIR))
 	MakeDir($(BUILDLOCDIR))
 

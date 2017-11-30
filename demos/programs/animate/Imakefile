@@ -45,12 +45,12 @@ LOCAL_LIBRARIES = $(DEMOLIB) MrmClientLibs
 EXTRA_LIBRARIES = -lm 
  EXTRA_INCLUDES = -I$(DEMOLIBDIR)
 
-SRCS = animate.c
-OBJS = animate.o
+SRCS = xmanimate.c
+OBJS = xmanimate.o
 
 NormalLibraryObjectRule()
 
-MSimpleUilTarget(animate)
+MSimpleUilTarget(xmanimate)
 MSimpleUidTarget(dog)
 MSimpleUidTarget(plane)
 MSimpleUidTarget(superman)

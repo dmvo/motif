@@ -47,10 +47,23 @@ static char rcsid[] = "$TOG: Scale.c /main/31 1999/10/13 16:18:07 mgreess $"
 #include <stdio.h>
 #include <limits.h>
 #ifndef CSRG_BASED
-# ifdef linux
+/*
+ * Modification by Integrated Computer Solutions, Inc.  May 2000
+ *
+ * Original:
+ *
+ * # ifdef linux
+ * #  define RADIXCHAR MON_DECIMAL_POINT
+ * # endif
+ * # include <langinfo.h>
+ *
+ * glibc >= 2.0 defines RADIXCHAR in langinfo.h, simply make sure 
+ * that it is not redefined here.
+ */
+# include <langinfo.h>
+# if defined(linux) && !defined(RADIXCHAR)
 #  define RADIXCHAR MON_DECIMAL_POINT
 # endif
-# include <langinfo.h>
 # ifdef X_LOCALE
 #  ifdef linux
    /* avoid conflicting with <X11/Xlocale.h> defines */

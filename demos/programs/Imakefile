@@ -40,9 +40,14 @@ XCOMM   $XConsortium: Imakefile /main/7 1996/04/23 17:30:40 pascale $
 #define IHaveSubdirs
 #define PassCDebugFlags 'CDEBUGFLAGS=$(CDEBUGFLAGS)'
 
+#if defined(FreeBSDArchitecture)
+SETDATE =
+#else
+SETDATE = setdate
+#endif
 SUBDIRS = Exm airport animate drag_and_drop draw earth filemanager fileview \
 	getsubres hellomotif hellomotifi18n i18ninput panner periodic \
-	piano popups sampler2_0 setdate todo workspace
+	piano popups sampler2_0 $(SETDATE) todo workspace
 
 MakeSubdirs($(SUBDIRS))
 DependSubdirs($(SUBDIRS))
