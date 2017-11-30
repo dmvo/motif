@@ -53,6 +53,7 @@
 #include <Xm/Notebook.h>
 #include <Xm/RowColumn.h>
 #include <Xm/ScrollFrameT.h>
+#include <Xm/TraitP.h>
 #include <Exm/Simple.h>
 #include <Exm/String.h>
 #include <Exm/StringTrans.h>
@@ -141,6 +142,8 @@ main(int argc, char **argv)
 
    XtRealizeWidget(top_level);
    XtAppMainLoop(app_context);
+
+   return 0;    /* make compiler happy */
 }
 
 

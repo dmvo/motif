@@ -87,7 +87,7 @@ typedef struct {
 /*-------------------------------------------------------------
 **	    Main body
 */
-main(argc, argv) 
+int main(argc, argv) 
 int argc; char **argv;
 {
     XtAppContext app_context;
@@ -103,6 +103,8 @@ int argc; char **argv;
 
     XtRealizeWidget(toplevel);
     XtAppMainLoop(app_context);
+
+    return 0;    /* make compiler happy */
 }
 
 

@@ -123,5 +123,7 @@ int main(int argc, char **argv)
   /* Realize and start event dispatching */
   XtRealizeWidget(top_level);
   XtAppMainLoop(app_context);
+
+  return 0;    /* make compiler happy */
 }
 

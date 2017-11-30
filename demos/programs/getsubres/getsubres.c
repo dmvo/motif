@@ -56,8 +56,6 @@
 static void QuitCB ();			
 static void HelpCB ();			
 
-static Widget CreateHelp ();		
-
 typedef struct _ClassArrayRec {
     String name ;
     WidgetClass class ;
@@ -390,7 +388,7 @@ static String fallbacks[] = {
 
 #define APP_CLASS "XmdGetsubres"
 
-main(argc, argv)
+int main(argc, argv)
 int argc ; char **argv;
 {
     Widget toplevel, main_window, menu_bar, menu_pane, cascade, 
@@ -489,6 +487,8 @@ int argc ; char **argv;
 
     XtRealizeWidget(toplevel);
     XtAppMainLoop(app_context);
+
+    return 0;    /* make compiler happy */
 }
 
 /*-------------------------------------------------------------

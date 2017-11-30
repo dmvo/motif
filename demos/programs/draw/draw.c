@@ -48,9 +48,11 @@
 */
 
 #include <stdio.h>
+#include <ctype.h>
 #include <Xm/XmAll.h>
 #include <Xmd/RegEdit.h>   
 #include <Xmd/Help.h>   
+#include <X11/IntrinsicP.h>
 
 /*-------------------------------------------------------------
 **	Graphic data structure and API

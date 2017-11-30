@@ -43,6 +43,6 @@ OBJS = autopopups.o
 
 MSimpleProgramTarget(autopopups)
 InstallProgram(autopopups,$(BINDIR))
-InstallManPage(autopopups, $(MANDIR))
+InstallManPage(autopopups,$(MANDIR))
 
 DependTarget()

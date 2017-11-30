@@ -43,6 +43,7 @@
 #include <Xm/MainW.h>
 #include <Xm/Frame.h>
 #include <Xm/CascadeB.h>
+#include <Xm/MessageB.h>
 #include <Xm/PushBG.h>
 #include <Xm/RowColumn.h>
 #include <Xm/Transfer.h>
@@ -53,7 +54,7 @@
 #include <string.h>
 #include <ctype.h>
 
-int  MakeTextWidgets(Widget);
+void MakeTextWidgets(Widget);
 void ConvertCallback(Widget, XtPointer, XtPointer);
 void DestinationCallback(Widget, XtPointer, XtPointer);
 void TransferProc(Widget, XtPointer, XtPointer);
@@ -92,6 +93,8 @@ main(int argc, char **argv)
 
    XtRealizeWidget(toplevel);
    XtAppMainLoop(app_context);
+
+   return 0;    /* make compiler happy */
 }
 
 
@@ -99,7 +102,7 @@ main(int argc, char **argv)
 MakeTextWidgets: Instantiate two text widgets both managed by the 
 same RowColumn widget. 
 ******************************************************************/
-int 
+void
 MakeTextWidgets(Widget   parent)
 {
  Widget        RC1;
@@ -172,9 +175,10 @@ ConvertCallback(Widget  w,
     copy_of_selected_text = selected_text;
     
   /* Convert any lowercase letters in the selection to uppercase. */
-    while (*selected_text++)  {
+    while (*selected_text)  {
        if (islower(*selected_text))
          *selected_text = toupper(*selected_text); 
+         selected_text++;
     }
 
   /* Place the converted text into the XmConvertCallbackStruct. */ 
@@ -207,7 +211,7 @@ DestinationCallback(Widget  w,
 
  /* Ask the source to return a list of all the targets supported. */ 
  XmTransferValue(dcs->transfer_id, TARGETS, (XtCallbackProc)TransferProc,
-                  NULL, NULL);
+                  NULL, XtLastTimestampProcessed(XtDisplay(w)));
 }
 
 
@@ -243,7 +247,8 @@ TransferProc(Widget  w,
      if (MYTEXT_is_supported)
        printf("TransferProc: Requesting conversion of MYTEXT.\n");
        XmTransferValue(scs->transfer_id, MYTEXT,
-                   (XtCallbackProc)TransferProc, NULL, NULL);
+                   (XtCallbackProc)TransferProc, NULL,
+                   XtLastTimestampProcessed(XtDisplay(w)));
    }
 
   if ((scs->target == MYTEXT)) { 

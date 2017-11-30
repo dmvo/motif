@@ -112,4 +112,6 @@ int main(argc, argv)
   XtRealizeWidget(toplevel);
 
   XtAppMainLoop(app_context);
+
+  return 0;    /* make compiler happy */
 }

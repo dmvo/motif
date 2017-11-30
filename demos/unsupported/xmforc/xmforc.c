@@ -44,6 +44,7 @@
 */
 
 #include <Xm/XmAll.h>
+#include <stdlib.h>
 
 /*-------------------------------------------------------------
 **	forwarded functions

@@ -87,6 +87,7 @@ static char rcsid[] = "$TOG: motifshell.c /main/7 1997/03/31 13:41:20 dbl $"
 #include <Xm/MainW.h>
 #include <Xm/MenuShell.h>
 #include <Xm/PushB.h>
+#include <Xm/RepType.h>
 #include <Xm/ScrolledW.h>
 #include <Xm/SelectioB.h>
 #include <Xm/Text.h>
@@ -113,6 +114,8 @@ Widget       LabelW;
 XtAppContext AppContext;
 int          perr[2], p;
 
+/*  Declarations  */
+int GetFileLen (int fd);
 
 
 
@@ -256,8 +259,14 @@ char *NextCap (char *path, char *cp, int len)
  *-------------------------------------------------------------*/
 int file_exist (char *fullname)
 {
-  if (fopen(fullname,"r"))
-    return(1);
+  /* Save the file pointer so it can be closed */
+  FILE *tmpf;
+
+  if (tmpf=fopen(fullname,"r"))
+  {
+      fclose(tmpf);
+      return(1);
+  }
   else
     return(0);
 }  
@@ -305,6 +314,14 @@ char *GetSource (char *fileptr)
   
   
   if ((fd = open (fileptr, O_RDONLY)) < 0)
+  {
+    /* Try looking in MSHELLDIR. */
+    char pathname[1024];
+    strcpy(pathname, MSHELLDIR);
+    strcat(pathname, "/");
+    strcat(pathname, fileptr);
+      
+    if ((fd = open (pathname, O_RDONLY)) < 0)
     {
       if (defaultcap = getenv("MOTIFSHELLFILES"))
 	{
@@ -317,7 +334,7 @@ char *GetSource (char *fileptr)
 
 	  if ((fd = open(datahome, O_RDONLY)) < 0)
 	    {
-	      printf ("Cannot find the sourch file %s in %s\n", fileptr, datahome);
+	      printf ("Cannot find the file %s in %s\n", fileptr, datahome);
 	      free(datahome);
 	      return((char *) NULL);
 	    }
@@ -331,11 +348,12 @@ char *GetSource (char *fileptr)
 	  }
 	else
 	  {
-	    printf ("Cannot find the sourch file %s\n", fileptr);
+	    printf ("Cannot find the file %s\n", fileptr);
 	    printf ("Please setup MOTIFSHELLFILES entry in environment and put data files there.\n");
 	    return ((char *) NULL);
 	  }
     }
+  }
 
   flen = GetFileLen(fd);
   retbuff = (char*) calloc (1, flen + 1);
@@ -685,9 +703,9 @@ void Menu3CB (Widget w, XtPointer clientData, XtPointer callData)
 
   switch (itemNo)
     {
-    case 0: SysCall (w, "motifgif", False);  break;
-    case 1: SysCall (w, "periodic", True);  break;
-    case 2: SysCall (w, "motifbur", True);  break;
+    case 0: SysCall (w, "periodic", True);  break;
+    case 1: SysCall (w, "dogs", True);  break;
+    case 2: SysCall (w, "motifanim", False);  break;
     }
 }
 
@@ -704,32 +722,31 @@ void Menu4CB (Widget w, XtPointer clientData, XtPointer callData)
 
   switch (itemNo)
     {
-    case 0:				   /* Terminal */
-      {
-	SysCall (w, "xterm", False); 
-	break;
-      }
-    case 1:                                /* File Listing */
+    case 0:                                /* File Listing */
       {
 	XtVaGetValues(w, XmNlabelString, &labelStr, NULL);
 	SetLabelStr (labelStr);
-	system ("ls -al > foo");
-	buffer = GetSource ("foo");
+	system ("ls -al > /tmp/motifshell.tmp");
+	buffer = GetSource ("/tmp/motifshell.tmp");
 	XmTextSetString (TextWin, buffer);
-	system ("rm -r foo");
+	system ("rm -r /tmp/motifshell.tmp");
 	break;
       }
-    case 2:                                /* Process Status */
+    case 1:                                /* Process Status */
       {
 	XtVaGetValues(w, XmNlabelString, &labelStr, NULL);
 	SetLabelStr (labelStr);
-	system ("ps -a > foo");
-	buffer = GetSource ("foo");
+#ifdef linux
+	system ("ps a > /tmp/motifshell.tmp");
+#else
+	system ("ps -a > /tmp/motifshell.tmp");
+#endif
+	buffer = GetSource ("/tmp/motifshell.tmp");
 	XmTextSetString (TextWin, buffer);
-	system ("rm -r foo");
+	system ("rm -r /tmp/motifshell.tmp");
 	break;
       }
-    case 3:                                /* Show Source */
+    case 2:                                /* Show Source */
       {
 	XtVaGetValues(w, XmNlabelString, &labelStr, NULL);
 	SetLabelStr (labelStr);
@@ -751,9 +768,9 @@ void Menu5CB (Widget w, XtPointer clientData, XtPointer callData)
 
   switch (itemNo)
     {
-    case 0: SysCall (w, "xclock", False);  break;
-    case 1: SysCall (w, "xload", False);   break;
-    case 2: SysCall (w, "kaleid", False);  break;
+    case 0: SysCall (w, "xterm", False);  break;
+    case 1: SysCall (w, "xclock", False);  break;
+    case 2: SysCall (w, "xload", False);   break;
     }
 }
 
@@ -803,9 +820,9 @@ static  char     *menuString[] = {
 static   char     *subString[][XtNumber(menuString)] = {
     { "Quit" },
     { "OSF Membership", "OSF's Research Institute",  "OSF's Principles", "OSF/Motif" },
-    { "Pictures", "Periodic Table", "Motif Burger" },
-    { "Terminal", "File Listing", "Process Status", "Show Source" },
-    { "Xclock", "Xload", "Kaleidescope"},
+    { "Periodic Table", "Dogs", "Animation" },
+    { "File Listing", "Process Status", "Show Source" },
+    { "Xterm", "Xclock", "Xload"},
     { "Load..." },
     { "Are you sure ?" }
   };
@@ -855,9 +872,8 @@ Widget CreateMenuBar (Widget parent)
 	XmVaPUSHBUTTON, s[0] = XmStringCreateSimple(subString[3][0]), NULL, NULL, NULL,
 	XmVaPUSHBUTTON, s[1] = XmStringCreateSimple(subString[3][1]), NULL, NULL, NULL,
 	XmVaPUSHBUTTON, s[2] = XmStringCreateSimple(subString[3][2]), NULL, NULL, NULL,
-	XmVaPUSHBUTTON, s[3] = XmStringCreateSimple(subString[3][3]), NULL, NULL, NULL,
 	NULL);
-  for (i=0; i<=3; i++) XmStringFree(s[i]);
+  for (i=0; i<=2; i++) XmStringFree(s[i]);
 
   XmVaCreateSimplePulldownMenu(menuBar, menuString[4], 4, Menu5CB,   /* X Programs */
 	XmVaPUSHBUTTON, s[0] = XmStringCreateSimple(subString[4][0]), NULL, NULL, NULL,
@@ -898,8 +914,8 @@ int main (int argc, char **argv)
   signal(SIGINT,  Quit);
   signal(SIGQUIT, Quit);
 
-  system ("touch foo");
-  system ("rm -r foo");
+  system ("touch /tmp/motifshell.tmp");
+  system ("rm -r /tmp/motifshell.tmp");
 
   XtToolkitInitialize();
   AppContext = XtCreateApplicationContext();
@@ -932,4 +948,6 @@ int main (int argc, char **argv)
   XtRealizeWidget(shell);
 
   XtAppMainLoop(AppContext);
+
+  return 0;    /* make compiler happy */
 }

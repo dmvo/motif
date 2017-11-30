@@ -252,6 +252,8 @@ main(int argc, char* argv[])
   XtRealizeWidget(shell);
 
   XtAppMainLoop(context);
+
+  return 0;    /* make compiler happy */
 }
 
 static void 

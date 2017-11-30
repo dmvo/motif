@@ -153,7 +153,7 @@ versionButtonMnem :	"V";
 ! periodic title
 
 titleLabelText :	"The Periodic Table of Motif Widgets";
-subtitleLabelText :	"Open Software Foundation";
+subtitleLabelText :	"The Open Group";
 
 ! widget names
 
@@ -211,8 +211,8 @@ radio2Value :		915;
 radio3Text :		"WGBH";
 radio3Value :		897;
 
-pane1Text :		"Open Software Foundation";
-pane2Text :		"OSF/Motif Release 2.0\n";
+pane1Text :		"The Open Group";
+pane2Text :		"Open Motif Release 2.1\n";
 
 popupWindowText :	compound_string ("Press", separate = true) &
 			compound_string ("Button 3", separate = true) &
@@ -413,7 +413,7 @@ questionYesText :	"Yes";
 questionMaybeText :	"Maybe";
 questionNoText :	"No";
 questionMessageText :
-		compound_string("This is Motif 2.0.", separate = true) &
+		compound_string("This is Motif 2.1.", separate = true) &
 		compound_string("", separate = true) &
 		compound_string("Any questions ?");
 questionPixmap : icon("                         ",

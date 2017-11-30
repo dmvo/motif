@@ -50,7 +50,7 @@ Widget top_level;
 
 #define APP_CLASS "XmdNotebook"
 
-void
+int
 main(int    argc,
      char **argv)
 {
@@ -71,6 +71,8 @@ main(int    argc,
 
    XtRealizeWidget(top_level);
    XtAppMainLoop(app_context);
+
+   return 0;    /* make compiler happy */
 }
 
 

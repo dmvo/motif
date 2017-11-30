@@ -77,7 +77,7 @@ static void Warning(Airport this, XmString s1, XmString s2);
  *    Main loop
  */
 
-void main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 #define MAIN_CHILDREN		3
 #define FORM_CHILDREN		3
@@ -339,6 +339,8 @@ void main(int argc, char *argv[])
 			      |GCFillStyle|GCForeground|GCBackground,
 			      &gcv);
    XtAppMainLoop(this->context);
+
+   return 0;    /* make compiler happy */
 }
 
 /* ===============================================================

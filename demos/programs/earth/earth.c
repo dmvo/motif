@@ -111,7 +111,6 @@ static int          n ;
 static void    Syntax() ;
 static void    input_callback();
 static void    expose_callback();
-static Boolean fstep() ;
 static void    speed_callback() ;
 static void    NextBitmap ();
 
@@ -134,7 +133,7 @@ char *fallback[] = {
 };
 
 
-main(argc, argv) int argc; char **argv ;
+int main(argc, argv) int argc; char **argv ;
 /**************************************/
 {
     Arg args[10] ;
@@ -218,6 +217,8 @@ main(argc, argv) int argc; char **argv ;
 					NextBitmap, NULL);
     
     XtAppMainLoop(app_con);
+
+    return 0;    /* make compiler happy */
 }
 
 static void NextBitmap (client_data, id)

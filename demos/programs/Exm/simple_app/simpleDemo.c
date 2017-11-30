@@ -183,4 +183,6 @@ main (int argc, char **argv)
   XtRealizeWidget(shell);
 
   XtAppMainLoop(AppContext);
+
+  return 0;    /* make compiler happy */
 }

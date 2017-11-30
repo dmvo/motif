@@ -87,6 +87,8 @@
 #include <Xm/DrawP.h>
 #include <Xm/RepType.h>
 #include <Exm/PannerP.h>
+#include <stdlib.h>
+#include <ctype.h>
 
 
 /* Define macros and constants. */

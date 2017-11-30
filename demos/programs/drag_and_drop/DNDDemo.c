@@ -1015,7 +1015,8 @@ TransferProcCallback(Widget wid,
     /* Handle rect_info type (i.e. new rectangle) */
     else if (cs -> type == RECT_INFO) {
       rect = (RectPtr) cs -> value;
-        RectRegister(rect, transferRec->x, transferRec->y);
+      RectRegister(rect, transferRec->x, transferRec->y);
+      RedrawRectangles(wid);
       cs -> value = NULL; /* No need to free, it is being stored in RecTable */
     }
 
@@ -1384,4 +1385,6 @@ main (int argc, String *argv)
     /* Begin event loop processing */
     XtAppMainLoop(appContext);
 
+    /* Make compiler happy */
+    return 0; 
 }

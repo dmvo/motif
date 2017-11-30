@@ -1,9 +1,9 @@
-XCOMM 
+XCOMM $XConsortium: Imakefile /main/4 2000/06/02 17:31:02 jimb $
 XCOMM @OPENGROUP_COPYRIGHT@
 XCOMM COPYRIGHT NOTICE
 XCOMM Copyright (c) 1990, 1991, 1992, 1993 Open Software Foundation, Inc.
 XCOMM Copyright (c) 1996, 1997, 1998, 1999, 2000 The Open Group
-XCOMM ALL RIGHTS RESERVED (MOTIF). See the file named COPYRIGHT.MOTIF for
+XCOMM ALL RIGHTS RESERVED (MOTIF).  See the file named COPYRIGHT.MOTIF for
 XCOMM the full copyright text.
 XCOMM 
 XCOMM This software is subject to an open license. It may only be
@@ -35,14 +35,12 @@ XCOMM POSSIBILITY OF SUCH DAMAGES.
 XCOMM 
 XCOMM 
 XCOMM HISTORY
-XCOMM 
-XCOMM   $XConsortium: Imakefile /main/7 1996/04/23 17:30:40 pascale $
+
 #define IHaveSubdirs
 #define PassCDebugFlags 'CDEBUGFLAGS=$(CDEBUGFLAGS)'
 
-SUBDIRS = Exm airport animate drag_and_drop draw earth filemanager fileview \
-	getsubres hellomotif hellomotifi18n i18ninput periodic \
-	piano popups sampler2_0 setdate todo
+SUBDIRS = ch05/Scale ch06/combo_box ch06/spin_box ch08/Container \
+ch08/Notebook ch16 ch17/simple_drag ch17/simple_drop
 
 MakeSubdirs($(SUBDIRS))
 DependSubdirs($(SUBDIRS))

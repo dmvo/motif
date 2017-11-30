@@ -154,6 +154,8 @@ int main (argc,argv)
 	/*	Get and dispatch events.
 	*/
 	XtAppMainLoop (app_context);
+
+	return 0;    /* make compiler happy */
 }
 
 
