@@ -2937,6 +2937,7 @@ void PackIconBox (IconBoxData *pIBD, Boolean packVert, Boolean packHorz, int pas
 	if (majorDimension != pIBD->IPD.placementCols)
 	{
 	    pIBD->IPD.placementCols = majorDimension;
+            if (pIBD->IPD.placementCols == 0) pIBD->IPD.placementCols++;
 	}
     }
     else
@@ -2954,6 +2955,7 @@ void PackIconBox (IconBoxData *pIBD, Boolean packVert, Boolean packHorz, int pas
 	if (majorDimension != pIBD->IPD.placementRows)
 	{
 	    pIBD->IPD.placementRows = majorDimension;
+            if (pIBD->IPD.placementRows == 0) pIBD->IPD.placementRows++;
 	}
     }
 
